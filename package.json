@@ -1,0 +1,27 @@
+{
+  "name": "codesearch-ai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Semantic code search engine — search any GitHub repo in plain English",
+  "workspaces": [
+    "packages/shared",
+    "packages/api",
+    "packages/ingestion",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "dev:api": "bun run --filter @codesearch/api dev",
+    "dev:frontend": "bun run --filter @codesearch/frontend dev",
+    "dev:ingestion": "bun run --filter @codesearch/ingestion dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "typecheck": "tsc --build",
+    "clean": "rm -rf packages/*/dist packages/*/.next"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/bun": "^1.1.0"
+  }
+}

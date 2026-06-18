@@ -1,0 +1,27 @@
+// Purpose: Shared TypeScript config for the entire monorepo.
+// All package-level tsconfigs extend this base.
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "incremental": true,
+    "paths": {
+      "@shared/*": ["./packages/shared/src/*"]
+    },
+    "types": ["bun"]
+  },
+  "exclude": ["node_modules", "dist", ".next"]
+}
