@@ -12,7 +12,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "ioredis": "^5.4.0"
+    "ioredis": "^5.4.0",
+    "langfuse": "^3.15.0"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

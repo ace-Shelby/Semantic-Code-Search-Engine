@@ -13,6 +13,7 @@ import {
   isQdrantConnectionError,
   QdrantService,
 } from "../services/qdrant.service.ts";
+import { observability } from "../clients.ts";
 
 const searchRequestSchema = z.object({
   query: z.string().min(2).max(500),
@@ -108,6 +109,8 @@ const hybridSearchService = new HybridSearchService(
 
 searchRouter.post("/", async (c) => {
   const traceId = crypto.randomUUID();
+  const startMs = performance.now();
+  let trace: ReturnType<typeof observability.createTrace> | undefined;
 
   try {
     const parsed = searchRequestSchema.safeParse(await readJson(c));
@@ -125,6 +128,13 @@ searchRouter.post("/", async (c) => {
     }
 
     const request = parsed.data;
+
+    trace = observability.createTrace({
+      traceId,
+      name: "search",
+      tags: ["search", request.repoId, request.query.slice(0, 50)],
+    });
+
     const exists = await qdrantService.collectionExists(request.repoId);
     if (!exists) {
       const body: RouteErrorResponse = {
@@ -136,9 +146,13 @@ searchRouter.post("/", async (c) => {
       return c.json(body, 404);
     }
 
-    const startTime = Date.now();
-    const searchResults = await hybridSearchService.search(request);
-    const latencyMs = Date.now() - startTime;
+    const searchResults = await hybridSearchService.search({
+      ...request,
+      trace,
+    });
+    const latencyMs = Math.round(performance.now() - startMs);
+
+    trace.end({ latencyMs, resultCount: searchResults.length });
 
     const response: SearchResponse = {
       results: searchResults.map(toSearchResult),
@@ -150,18 +164,24 @@ searchRouter.post("/", async (c) => {
     return c.json(response, 200);
   } catch (err) {
     if (isQdrantConnectionError(err)) {
+      const errorMessage = "Search service unavailable";
+      trace?.end({ error: errorMessage, latencyMs: Math.round(performance.now() - startMs) });
+
       const body: RouteErrorResponse = {
         error: "SEARCH_SERVICE_UNAVAILABLE",
-        message: "Search service unavailable",
+        message: errorMessage,
         traceId,
       };
 
       return c.json(body, 503);
     }
 
+    const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+    trace?.end({ error: errorMessage, latencyMs: Math.round(performance.now() - startMs) });
+
     const body: RouteErrorResponse = {
       error: "INTERNAL_SERVER_ERROR",
-      message: err instanceof Error ? err.message : "An unexpected error occurred",
+      message: errorMessage,
       traceId,
     };
 

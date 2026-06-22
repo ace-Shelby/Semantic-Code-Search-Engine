@@ -9,6 +9,12 @@
  */
 
 export { CacheService } from "./cache.ts";
+export {
+  ObservabilityService,
+  type TraceContext,
+  type SpanContext,
+  type GenerationContext,
+} from "./observability.ts";
 
 export type {
   SupportedLanguage,

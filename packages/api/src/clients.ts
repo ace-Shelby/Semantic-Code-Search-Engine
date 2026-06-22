@@ -1,6 +1,6 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
 import Redis from "ioredis";
-import { Langfuse } from "langfuse";
+import { ObservabilityService } from "@codesearch/shared";
 
 export const PORT = Number(process.env.API_PORT ?? 3001);
 export const HOST = process.env.API_HOST ?? "0.0.0.0";
@@ -18,7 +18,7 @@ export const redis = new Redis(REDIS_URL, {
   lazyConnect: true,
 });
 
-export const langfuse = new Langfuse({
+export const observability = new ObservabilityService({
   publicKey: process.env.LANGFUSE_PUBLIC_KEY ?? "",
   secretKey: process.env.LANGFUSE_SECRET_KEY ?? "",
   baseUrl: process.env.LANGFUSE_BASE_URL ?? "https://cloud.langfuse.com",

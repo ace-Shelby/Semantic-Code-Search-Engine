@@ -28,15 +28,15 @@ import {
   PORT,
   qdrant,
   redis,
-  langfuse,
+  observability,
 } from "./clients.ts";
 import { globalErrorHandler } from "./middleware/error-handler.ts";
 import { reposRouter } from "./routes/repos.route.ts";
 import { searchRouter } from "./routes/search.route.ts";
-import { askRouter } from "./routes/ask.ts";
-import { metricsRouter } from "./routes/metrics.ts";
+import { askRouteRouter } from "./routes/ask.route.ts";
+import { metricsRouter } from "./routes/metrics.route.ts";
 
-export { qdrant, redis, langfuse };
+export { qdrant, redis, observability };
 
 // ── App ───────────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ app.get("/health", async (c) => {
 
 app.route("/api/v1/repos", reposRouter);
 app.route("/api/v1/search", searchRouter);
-app.route("/api/v1/ask", askRouter);
+app.route("/api/v1/ask", askRouteRouter);
 app.route("/api/v1/metrics", metricsRouter);
 
 // ── Global Error Handler ──────────────────────────────────────

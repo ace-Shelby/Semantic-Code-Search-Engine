@@ -6,6 +6,12 @@
  * Hybrid mode runs vector and BM25 retrieval in parallel, then merges ranked
  * candidate lists with Reciprocal Rank Fusion.
  *
+ * Observability: When a TraceContext is provided, the service records:
+ *   • vector_search span — latency, result count
+ *   • bm25_search span   — latency, result count
+ *   • rrf_merge span     — vector/BM25 counts, merged count
+ *   • cache hit/miss as metadata on span output
+ *
  * Dependencies: ioredis, @codesearch/shared, ./vector-search.service, ./rrf
  */
 
@@ -15,6 +21,7 @@ import type {
   SearchRequest as SharedSearchRequest,
   SearchResult,
   ChunkPayload,
+  TraceContext,
 } from "@codesearch/shared";
 import type {
   VectorSearchService,
@@ -35,7 +42,10 @@ const CANDIDATE_LIMIT = 20;
 
 export type SearchRequest =
   Pick<SharedSearchRequest, "query" | "repoId"> &
-  Partial<Pick<SharedSearchRequest, "topK" | "mode">>;
+  Partial<Pick<SharedSearchRequest, "topK" | "mode">> & {
+    /** Optional trace context for observability instrumentation. */
+    trace?: TraceContext;
+  };
 
 export interface HybridSearchResult extends SearchResult {
   source: "vector" | "keyword" | "both";
@@ -77,14 +87,30 @@ export class HybridSearchService {
 
     const topK = normalizeTopK(request.topK);
     const mode = request.mode ?? "hybrid";
+    const trace = request.trace;
     const cacheKey = await toSearchCacheKey(request.query, request.repoId, mode);
+
+    // ── Cache check ───────────────────────────────────────────
     const cachedResults = await this.getCachedResults(cacheKey);
 
     if (cachedResults) {
+      // Record cache hit in observability
+      trace?.startSpan("search_cache", { cacheKey })
+        .end({ cacheHit: true, cachedResultCount: cachedResults.length });
       return cachedResults.slice(0, topK);
     }
 
-    const fullResults = await this.executeSearch(request.query, request.repoId, mode);
+    // Record cache miss
+    trace?.startSpan("search_cache", { cacheKey })
+      .end({ cacheHit: false });
+
+    // ── Execute search with spans ─────────────────────────────
+    const fullResults = await this.executeSearch(
+      request.query,
+      request.repoId,
+      mode,
+      trace,
+    );
 
     await this.setCachedResults(cacheKey, fullResults);
     return fullResults.slice(0, topK);
@@ -94,31 +120,60 @@ export class HybridSearchService {
     query: string,
     repoId: string,
     mode: SearchMode,
+    trace?: TraceContext,
   ): Promise<HybridSearchResult[]> {
     if (mode === "vector") {
+      const vectorSpan = trace?.startSpan("vector_search", { mode, query: query.slice(0, 100) });
       const vectorResults = await this.vectorSearch.search({
         query,
         repoId,
         topK: CANDIDATE_LIMIT,
       });
+      vectorSpan?.end({ resultCount: vectorResults.length });
       return mergeSearchResults(vectorResults, []);
     }
 
     if (mode === "keyword") {
+      const bm25Span = trace?.startSpan("bm25_search", { mode, query: query.slice(0, 100) });
       const bm25Results = await this.bm25Indexer.search(repoId, query, CANDIDATE_LIMIT);
+      bm25Span?.end({ resultCount: bm25Results.length });
       return mergeSearchResults([], bm25Results);
     }
+
+    // ── Hybrid mode: parallel vector + BM25 ───────────────────
+    const vectorSpan = trace?.startSpan("vector_search", { mode, query: query.slice(0, 100) });
+    const bm25Span = trace?.startSpan("bm25_search", { mode, query: query.slice(0, 100) });
 
     const [vectorResults, bm25Results] = await Promise.all([
       this.vectorSearch.search({
         query,
         repoId,
         topK: CANDIDATE_LIMIT,
+      }).then((results) => {
+        vectorSpan?.end({ resultCount: results.length });
+        return results;
       }),
-      this.bm25Indexer.search(repoId, query, CANDIDATE_LIMIT),
+      this.bm25Indexer.search(repoId, query, CANDIDATE_LIMIT)
+        .then((results) => {
+          bm25Span?.end({ resultCount: results.length });
+          return results;
+        }),
     ]);
 
-    return mergeSearchResults(vectorResults, bm25Results);
+    // ── RRF merge span ────────────────────────────────────────
+    const rrfSpan = trace?.startSpan("rrf_merge", {
+      vectorResultCount: vectorResults.length,
+      bm25ResultCount: bm25Results.length,
+    });
+
+    const merged = mergeSearchResults(vectorResults, bm25Results);
+
+    rrfSpan?.end({
+      mergedResultCount: merged.length,
+      bothSourceCount: merged.filter((r) => r.source === "both").length,
+    });
+
+    return merged;
   }
 
   private async getCachedResults(cacheKey: string): Promise<HybridSearchResult[] | null> {

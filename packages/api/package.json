@@ -20,6 +20,7 @@
     "ace-throttle": "latest",
     "wink-bm25-text-search": "^3.1.2",
     "zod": "^3.23.8",
+    "tiktoken": "^1.0.21",
     "@codesearch/ingestion": "workspace:*",
     "@codesearch/shared": "workspace:*"
   },
