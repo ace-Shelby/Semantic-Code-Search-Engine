@@ -50,12 +50,6 @@ export default function RootLayout({
               >
                 Home
               </Link>
-              <Link
-                href="/metrics"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                Metrics
-              </Link>
             </div>
           </div>
         </nav>
