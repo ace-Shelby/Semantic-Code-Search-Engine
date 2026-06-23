@@ -9,7 +9,7 @@
  * Example: GET /api/proxy/repos → GET http://127.0.0.1:3001/api/v1/repos
  */
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:3001";
+const BACKEND_URL = (process.env.BACKEND_URL ?? "http://127.0.0.1:3001").replace(/\/+$/, "");
 
 export async function GET(
   request: Request,
