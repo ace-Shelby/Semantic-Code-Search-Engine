@@ -16,7 +16,7 @@
 
 export const runtime = "edge";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:3001";
+const BACKEND_URL = (process.env.BACKEND_URL ?? "http://127.0.0.1:3001").replace(/\/+$/, "");
 
 export async function POST(request: Request): Promise<Response> {
   const body = await request.text();

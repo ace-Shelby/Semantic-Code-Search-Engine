@@ -17,7 +17,7 @@ interface MetricsData {
   lastUpdated: string;
 }
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
+const BACKEND_URL = (process.env.BACKEND_URL ?? "http://localhost:3001").replace(/\/+$/, "");
 
 // ── Server Component ──────────────────────────────────────────
 
