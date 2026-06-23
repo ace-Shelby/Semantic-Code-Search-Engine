@@ -23,7 +23,7 @@ const FILLER_DOC_PREFIX = "__bm25_internal_filler__";
 const FIELD_WEIGHTS = {
   content: 1.0,
   filePath: 0.5,
-  symbolName: 2.0,
+  symbolName: 4.0,
 } as const;
 
 const CODE_STOP_WORDS = new Set([

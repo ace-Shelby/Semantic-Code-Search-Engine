@@ -181,7 +181,7 @@ function makeChunk(params: {
   symbolName: string | null;
 }): CodeChunk {
   return {
-    id: `${params.repoId}:${params.filePath}:${params.startLine}`,
+    id: crypto.randomUUID(),
     repoId: params.repoId,
     filePath: params.filePath,
     startLine: params.startLine,

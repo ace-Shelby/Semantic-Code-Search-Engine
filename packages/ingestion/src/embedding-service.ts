@@ -32,11 +32,8 @@ import type {
 
 // ── Constants ─────────────────────────────────────────────────
 
-/** Model identifier for OpenAI embeddings. */
-const EMBEDDING_MODEL = "text-embedding-3-small";
-
-/** Dimensionality of the embedding vectors produced by text-embedding-3-small. */
-const VECTOR_DIMENSIONS = 1536;
+/** Dimensionality of the embedding vectors produced by text-embedding-3-small or Gemini. */
+const VECTOR_DIMENSIONS = Number(process.env.QDRANT_VECTOR_SIZE ?? 768);
 
 /** OpenAI pricing for text-embedding-3-small: $0.02 per 1M tokens. */
 const COST_PER_MILLION_TOKENS = 0.02;
@@ -56,6 +53,10 @@ const RATE_LIMIT_TIER = asTierName("embedding");
 export interface EmbeddingServiceConfig {
   /** OpenAI API key */
   openaiApiKey: string;
+  /** Custom base URL for OpenAI-compatible endpoints like Gemini */
+  openaiBaseUrl?: string;
+  /** Embedding model to use */
+  openaiEmbeddingModel?: string;
   /** ioredis client instance (used for distributed rate limiting) */
   redisClient: Redis;
   /** Number of chunks per OpenAI API call (default: 16) */
@@ -93,17 +94,24 @@ export class EmbeddingService {
   private openai: OpenAI;
   private limiter: RateLimiter;
   private batchSize: number;
+  private embeddingModel: string;
 
   constructor(config: EmbeddingServiceConfig) {
     const {
       openaiApiKey,
+      openaiBaseUrl,
+      openaiEmbeddingModel,
       redisClient,
       batchSize = 16,
       requestsPerSecond = 20,
     } = config;
 
-    this.openai = new OpenAI({ apiKey: openaiApiKey });
+    this.openai = new OpenAI({ 
+      apiKey: openaiApiKey,
+      baseURL: openaiBaseUrl,
+    });
     this.batchSize = batchSize;
+    this.embeddingModel = openaiEmbeddingModel ?? "text-embedding-004";
 
     // ace-throttle uses a branded RedisClient wrapper over ioredis
     const wrappedRedis = wrapRedisClient(redisClient);
@@ -263,8 +271,9 @@ export class EmbeddingService {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         const response = await this.openai.embeddings.create({
-          model: EMBEDDING_MODEL,
+          model: this.embeddingModel,
           input: inputs,
+          dimensions: VECTOR_DIMENSIONS,
         });
 
         // Defensive: verify OpenAI returned the right number of embeddings

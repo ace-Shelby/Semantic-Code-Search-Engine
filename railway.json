@@ -1,0 +1,39 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "bun install && cd packages/api && bun run build"
+  },
+  "deploy": {
+    "startCommand": "cd packages/api && bun run start",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
+/*
+DEPLOYMENT GUIDE:
+a) Push this repository to GitHub.
+b) Connect Railway to your GitHub repo.
+c) Add Qdrant service in Railway:
+   - Create a new service -> Deploy from Docker image -> qdrant/qdrant:v1.7.4
+   - Set start command/args if needed, wait for it to expose its port.
+d) Add Redis service in Railway:
+   - Create a new service -> Database -> Redis (Railway managed add-on)
+e) Set all env vars in Railway Variables for the API service:
+   - QDRANT_URL=http://<qdrant-internal-url>:6333
+   - REDIS_URL=redis://<redis-internal-url>:6379
+   - OPENAI_API_KEY=...
+   - LANGFUSE_PUBLIC_KEY=...
+   - LANGFUSE_SECRET_KEY=...
+   - INGEST_API_KEY=...
+   - NODE_ENV=production
+f) Deploy — Railway auto-builds using the Nixpacks builder or Dockerfile. 
+   Note: We adjusted the buildCommand slightly to run `bun install` from the root 
+   so it resolves the workspace:* dependencies properly.
+g) Connect frontend to Vercel:
+   - Import the repo into Vercel.
+   - Set the Framework Preset to Next.js.
+   - Set Root Directory to `packages/frontend`.
+   - Set `NEXT_PUBLIC_API_URL` to your deployed Railway API URL.
+*/

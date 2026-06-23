@@ -43,7 +43,7 @@ import type {
 // ── Constants ─────────────────────────────────────────────────
 
 /** Dimensionality of text-embedding-3-small vectors. */
-const VECTOR_SIZE = 1536;
+const VECTOR_SIZE = Number(process.env.QDRANT_VECTOR_SIZE ?? 768);
 
 /** Maximum points per Qdrant upsert call. */
 const UPSERT_BATCH_SIZE = 100;
@@ -170,17 +170,16 @@ export class QdrantService {
     const collectionName = await toCollectionName(repoId);
 
     try {
-      const response = await this.client.collectionExists(collectionName);
-      return response.exists;
+      await this.client.getCollection(collectionName);
+      return true;
     } catch (err) {
-      // Connection errors should propagate; "not found" is just false
       if (isConnectionError(err)) {
         throw new Error(
           `Cannot connect to Qdrant at ${this.url}. ` +
           `Is Qdrant running? Error: ${err instanceof Error ? err.message : String(err)}`
         );
       }
-      return false;
+      return false; // Not found means it doesn't exist
     }
   }
 

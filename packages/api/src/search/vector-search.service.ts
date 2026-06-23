@@ -16,14 +16,14 @@ import type {
   ChunkPayload,
   VectorSearchResult as SharedVectorSearchResult,
 } from "@codesearch/shared";
+import { toCollectionName } from "../services/qdrant.service.ts";
 
 // ── Constants ─────────────────────────────────────────────────
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
-const EMBEDDING_DIMENSIONS = 1536;
+const EMBEDDING_DIMENSIONS = Number(process.env.QDRANT_VECTOR_SIZE ?? 768);
 const CACHE_TTL_SECONDS = 60 * 60;
 const DEFAULT_TOP_K = 20;
-const MIN_VECTOR_SCORE = 0.3;
+const MIN_VECTOR_SCORE = 0.55;
 const DEFAULT_COLLECTION = "code_chunks";
 
 // ── Public Types ──────────────────────────────────────────────
@@ -39,6 +39,8 @@ export interface VectorSearchResult extends SharedVectorSearchResult {
 
 export interface VectorSearchServiceConfig {
   openaiApiKey: string;
+  openaiBaseUrl?: string;
+  openaiEmbeddingModel?: string;
   qdrantUrl: string;
   redisClient: Redis;
   /** Test hook; production callers should omit this. */
@@ -77,11 +79,17 @@ export class VectorSearchService {
   private readonly openai: OpenAIEmbeddingClient;
   private readonly qdrantService: QdrantSimilaritySearch;
   private readonly redisClient: Redis;
+  private readonly embeddingModel: string;
 
   constructor(config: VectorSearchServiceConfig) {
-    this.openai = config.openaiClient ?? new OpenAI({ apiKey: config.openaiApiKey });
+    this.openai = config.openaiClient ?? new OpenAI({ 
+      apiKey: config.openaiApiKey,
+      baseURL: config.openaiBaseUrl,
+      maxRetries: 5,
+    });
     this.qdrantService = config.qdrantService ?? new QdrantService(config.qdrantUrl);
     this.redisClient = config.redisClient;
+    this.embeddingModel = config.openaiEmbeddingModel ?? "text-embedding-004";
   }
 
   async search(params: VectorSearchParams): Promise<VectorSearchResult[]> {
@@ -121,8 +129,9 @@ export class VectorSearchService {
     }
 
     const response = await this.openai.embeddings.create({
-      model: EMBEDDING_MODEL,
+      model: this.embeddingModel,
       input: query,
+      dimensions: EMBEDDING_DIMENSIONS,
     });
 
     const vector = response.data[0]?.embedding;
@@ -199,7 +208,7 @@ class QdrantService implements QdrantSimilaritySearch {
       });
     }
 
-    const hits = await this.client.search(this.collectionName, {
+    const hits = await this.client.search(toCollectionName(repoId), {
       vector: queryVector,
       limit: topK,
       with_payload: true,

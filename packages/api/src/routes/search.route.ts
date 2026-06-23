@@ -63,6 +63,24 @@ class RedisBM25Indexer implements BM25Indexer {
     };
 
     const engine = bm25Module.default();
+    engine.defineConfig({ fldWeights: { content: 1.0, filePath: 0.5, symbolName: 4.0 } });
+    engine.definePrepTasks([
+      function tokenizeCodeText(input: string): string[] {
+        return input
+          .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+          .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+          .toLowerCase()
+          .split(/[^\p{L}\p{N}]+/u)
+          .filter(
+            (token) =>
+              token.length >= 2 &&
+              !new Set([
+                "const", "let", "var", "return", "function", "import", "export", "from",
+                "class", "interface", "type", "async", "await",
+              ]).has(token)
+          );
+      },
+    ]);
     engine.importJSON(serializedIndex);
 
     const chunkLookup = JSON.parse(serializedChunks) as Record<string, ChunkPayload>;
@@ -96,6 +114,8 @@ export const searchRouter = new Hono();
 const qdrantService = new QdrantService(qdrant);
 const vectorSearchService = new VectorSearchService({
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openaiBaseUrl: process.env.OPENAI_BASE_URL,
+  openaiEmbeddingModel: process.env.OPENAI_EMBEDDING_MODEL,
   qdrantUrl: QDRANT_URL,
   redisClient: redis,
   qdrantService,
@@ -163,6 +183,7 @@ searchRouter.post("/", async (c) => {
     c.header("X-Trace-Id", traceId);
     return c.json(response, 200);
   } catch (err) {
+    console.error("SEARCH ERROR:", err);
     if (isQdrantConnectionError(err)) {
       const errorMessage = "Search service unavailable";
       trace?.end({ error: errorMessage, latencyMs: Math.round(performance.now() - startMs) });
@@ -176,16 +197,23 @@ searchRouter.post("/", async (c) => {
       return c.json(body, 503);
     }
 
-    const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+    let errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+    let statusCode = 500;
+
+    if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
+      errorMessage = "You have exceeded the Google Gemini API rate limit. Please wait a minute and try again.";
+      statusCode = 429;
+    }
+
     trace?.end({ error: errorMessage, latencyMs: Math.round(performance.now() - startMs) });
 
     const body: RouteErrorResponse = {
-      error: "INTERNAL_SERVER_ERROR",
+      error: statusCode === 429 ? "RATE_LIMIT_EXCEEDED" : "INTERNAL_SERVER_ERROR",
       message: errorMessage,
       traceId,
     };
 
-    return c.json(body, 500);
+    return c.json(body, statusCode as any);
   }
 });
 

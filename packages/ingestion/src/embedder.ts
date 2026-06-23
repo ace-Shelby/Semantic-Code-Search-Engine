@@ -14,7 +14,11 @@
 import OpenAI from "openai";
 import type { CodeChunk } from "@codesearch/shared";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY ?? "",
+  baseURL: process.env.OPENAI_BASE_URL,
+  maxRetries: 5,
+});
 
 const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small";
 
@@ -41,6 +45,7 @@ export async function embedChunks(chunks: CodeChunk[]): Promise<EmbeddedChunk[]>
   const response = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
     input: inputs,
+    dimensions: Number(process.env.QDRANT_VECTOR_SIZE ?? 768),
   });
 
   // OpenAI returns embeddings in the same order as input

@@ -24,7 +24,6 @@ import type { HybridSearchResult } from "../search/hybrid-search.service.ts";
 // ── Constants ─────────────────────────────────────────────────
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 12_000;
-const LLM_MODEL = "gpt-4o-mini";
 const LLM_TEMPERATURE = 0.2;
 const LLM_MAX_COMPLETION_TOKENS = 2048;
 
@@ -71,6 +70,7 @@ export interface GenerateParams {
 export class RAGService {
   private readonly openai: OpenAI;
   private readonly maxContextTokens: number;
+  private readonly llmModel: string;
 
   /**
    * We lazily initialise the tiktoken encoder because the WASM
@@ -79,8 +79,13 @@ export class RAGService {
    */
   private encoder: ReturnType<typeof encoding_for_model> | null = null;
 
-  constructor(config: { openaiApiKey: string; maxContextTokens?: number }) {
-    this.openai = new OpenAI({ apiKey: config.openaiApiKey });
+  constructor(config: { openaiApiKey: string; openaiBaseUrl?: string; openaiLlmModel?: string; maxContextTokens?: number }) {
+    this.openai = new OpenAI({ 
+      apiKey: config.openaiApiKey,
+      baseURL: config.openaiBaseUrl,
+      maxRetries: 5,
+    });
+    this.llmModel = config.openaiLlmModel ?? "gpt-4o-mini";
     this.maxContextTokens = config.maxContextTokens ?? DEFAULT_MAX_CONTEXT_TOKENS;
   }
 
@@ -111,11 +116,11 @@ export class RAGService {
     const gen = trace?.startGeneration(
       "llm_generation",
       { systemPrompt: messages[0]?.content, userPromptLength: String(messages[1]?.content).length },
-      LLM_MODEL,
+      this.llmModel,
     );
 
     const response = await this.openai.chat.completions.create({
-      model: LLM_MODEL,
+      model: this.llmModel,
       temperature: LLM_TEMPERATURE,
       max_tokens: LLM_MAX_COMPLETION_TOKENS,
       messages,
@@ -130,7 +135,7 @@ export class RAGService {
     gen?.end({
       output: answer,
       usage: { promptTokens, completionTokens },
-      model: LLM_MODEL,
+      model: this.llmModel,
     });
 
     // ── Citations ─────────────────────────────────────────────
@@ -196,11 +201,11 @@ export class RAGService {
     const gen = trace?.startGeneration(
       "llm_generation",
       { systemPromptLength: String(messages[0]?.content).length, contextTokens: totalTokens },
-      LLM_MODEL,
+      this.llmModel,
     );
 
     const stream = await this.openai.chat.completions.create({
-      model: LLM_MODEL,
+      model: this.llmModel,
       temperature: LLM_TEMPERATURE,
       max_tokens: LLM_MAX_COMPLETION_TOKENS,
       messages,
@@ -236,7 +241,7 @@ export class RAGService {
     gen?.end({
       output: fullOutput,
       usage: { promptTokens, completionTokens },
-      model: LLM_MODEL,
+      model: this.llmModel,
     });
   }
 
@@ -407,8 +412,9 @@ export class RAGService {
 
   private getEncoder(): ReturnType<typeof encoding_for_model> {
     if (!this.encoder) {
-      // cl100k_base is the encoding for gpt-4o-mini / gpt-4o / gpt-4-turbo.
-      this.encoder = encoding_for_model(LLM_MODEL);
+      // tiktoken expects an OpenAI model string, so we gracefully fallback to gpt-4o-mini encoding for generic models like Gemini
+      const tiktokenModel = this.llmModel.startsWith("gpt") ? this.llmModel : "gpt-4o-mini";
+      this.encoder = encoding_for_model(tiktokenModel as any);
     }
     return this.encoder;
   }

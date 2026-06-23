@@ -209,7 +209,7 @@ function chunkWithAST(file: RawFile, repoId: string): CodeChunk[] {
       const lineCount = endLine - startLine + 1;
       if (lineCount >= MIN_CHUNK_LINES) {
         chunks.push({
-          id: nanoid(),
+          id: crypto.randomUUID(),
           repoId,
           filePath: file.filePath,
           startLine,
@@ -349,7 +349,7 @@ function slidingWindowChunk(
     // Only keep chunks with enough substance
     if (lineCount >= MIN_CHUNK_LINES) {
       chunks.push({
-        id: nanoid(),
+        id: crypto.randomUUID(),
         repoId,
         filePath,
         startLine: offset + 1,          // 1-indexed
@@ -393,7 +393,7 @@ function slidingWindowChunkFromNode(
 
     if (lineCount >= MIN_CHUNK_LINES) {
       chunks.push({
-        id: nanoid(),
+        id: crypto.randomUUID(),
         repoId,
         filePath,
         startLine: baseStartLine + offset,   // offset from the node's start line

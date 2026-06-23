@@ -21,7 +21,10 @@
     "clean": "rm -rf packages/*/dist packages/*/.next"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.1.0",
+    "eslint": "^10.5.0",
     "typescript": "^5.5.0",
-    "@types/bun": "^1.1.0"
+    "typescript-eslint": "^8.62.0"
   }
 }

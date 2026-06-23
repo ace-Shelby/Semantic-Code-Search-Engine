@@ -36,7 +36,7 @@ import {
 
 const RESULT_CACHE_TTL_SECONDS = 60 * 60;
 const DEFAULT_TOP_K = 8;
-const CANDIDATE_LIMIT = 20;
+const CANDIDATE_LIMIT = 60;
 
 // ── Public Types ──────────────────────────────────────────────
 
@@ -144,6 +144,9 @@ export class HybridSearchService {
     const vectorSpan = trace?.startSpan("vector_search", { mode, query: query.slice(0, 100) });
     const bm25Span = trace?.startSpan("bm25_search", { mode, query: query.slice(0, 100) });
 
+    const wordCount = query.trim().split(/\s+/).length;
+    const bm25CandidateLimit = wordCount > 4 ? 15 : CANDIDATE_LIMIT; // Heavily restrict BM25 candidates for natural language sentences
+
     const [vectorResults, bm25Results] = await Promise.all([
       this.vectorSearch.search({
         query,
@@ -153,7 +156,7 @@ export class HybridSearchService {
         vectorSpan?.end({ resultCount: results.length });
         return results;
       }),
-      this.bm25Indexer.search(repoId, query, CANDIDATE_LIMIT)
+      this.bm25Indexer.search(repoId, query, bm25CandidateLimit)
         .then((results) => {
           bm25Span?.end({ resultCount: results.length });
           return results;

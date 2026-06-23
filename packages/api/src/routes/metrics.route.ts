@@ -91,8 +91,6 @@ metricsRouter.get("/", async (c) => {
 
     const tracesUrl = new URL(`${LANGFUSE_BASE_URL}/api/public/traces`);
     tracesUrl.searchParams.set("limit", "100");
-    tracesUrl.searchParams.set("orderBy", "timestamp");
-    tracesUrl.searchParams.set("orderDir", "DESC");
 
     const tracesRes = await fetch(tracesUrl.toString(), {
       headers: { Authorization: authHeader },

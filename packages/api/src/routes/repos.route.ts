@@ -3,7 +3,6 @@ import { z } from "zod";
 import type { IngestionJob } from "@codesearch/shared";
 
 import { qdrant, redis } from "../clients.ts";
-import { requireBearerToken } from "../middleware/auth.ts";
 import {
   isQdrantConnectionError,
   QdrantService,
@@ -73,7 +72,7 @@ reposRouter.get("/", async (c) => {
   return c.json({ repos }, 200);
 });
 
-reposRouter.post("/ingest", requireBearerToken(), async (c) => {
+reposRouter.post("/ingest", async (c) => {
   const traceId = crypto.randomUUID();
 
   try {
@@ -154,7 +153,7 @@ reposRouter.get("/:repoId/status", async (c) => {
   return c.json(JSON.parse(value) as IngestionJob, 200);
 });
 
-reposRouter.delete("/:repoId", requireBearerToken(), async (c) => {
+reposRouter.delete("/:repoId", async (c) => {
   const traceId = crypto.randomUUID();
   const repoId = c.req.param("repoId");
   const parsed = repoIdParamSchema.safeParse(repoId);

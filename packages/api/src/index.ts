@@ -35,6 +35,7 @@ import { reposRouter } from "./routes/repos.route.ts";
 import { searchRouter } from "./routes/search.route.ts";
 import { askRouteRouter } from "./routes/ask.route.ts";
 import { metricsRouter } from "./routes/metrics.route.ts";
+import { healthRouter } from "./health.ts";
 
 export { qdrant, redis, observability };
 
@@ -57,32 +58,7 @@ app.use(
 
 // ── Health Check ──────────────────────────────────────────────
 
-app.get("/health", async (c) => {
-  let qdrantOk = false;
-  let redisOk = false;
-
-  try {
-    const collections = await qdrant.getCollections();
-    qdrantOk = Array.isArray(collections.collections);
-  } catch {
-    qdrantOk = false;
-  }
-
-  try {
-    const pong = await redis.ping();
-    redisOk = pong === "PONG";
-  } catch {
-    redisOk = false;
-  }
-
-  const body: HealthStatus = {
-    status: qdrantOk && redisOk ? "ok" : "degraded",
-    qdrant: qdrantOk,
-    redis: redisOk,
-  };
-
-  return c.json(body, qdrantOk && redisOk ? 200 : 503);
-});
+app.route("/health", healthRouter);
 
 // ── API Routes ────────────────────────────────────────────────
 
@@ -122,4 +98,5 @@ export default {
   port: PORT,
   hostname: HOST,
   fetch: app.fetch,
+  idleTimeout: 255,
 };

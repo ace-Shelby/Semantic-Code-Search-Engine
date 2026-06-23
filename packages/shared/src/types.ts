@@ -205,9 +205,11 @@ export interface ApiError {
 
 /** Response shape for GET /health. */
 export interface HealthStatus {
-  status: "ok" | "degraded";
+  status: "ok" | "degraded" | "down";
   qdrant: boolean;
   redis: boolean;
+  uptime: number;
+  version: string;
 }
 
 // ── Qdrant / Vector Storage ───────────────────────────────────

@@ -41,6 +41,7 @@ import {
 } from "../services/qdrant.service.ts";
 import { RAGService } from "../rag/rag.service.ts";
 import { observability } from "../clients.ts";
+import { config } from "../config.ts";
 
 // ── Validation ────────────────────────────────────────────────
 
@@ -94,6 +95,24 @@ class RedisBM25Indexer implements BM25Indexer {
     };
 
     const engine = bm25Module.default();
+    engine.defineConfig({ fldWeights: { content: 1.0, filePath: 0.5, symbolName: 4.0 } });
+    engine.definePrepTasks([
+      function tokenizeCodeText(input: string): string[] {
+        return input
+          .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+          .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+          .toLowerCase()
+          .split(/[^\p{L}\p{N}]+/u)
+          .filter(
+            (token) =>
+              token.length >= 2 &&
+              !new Set([
+                "const", "let", "var", "return", "function", "import", "export", "from",
+                "class", "interface", "type", "async", "await",
+              ]).has(token)
+          );
+      },
+    ]);
     engine.importJSON(serializedIndex);
 
     const chunkLookup = JSON.parse(serializedChunks) as Record<string, ChunkPayload>;
@@ -126,8 +145,10 @@ class RedisBM25Indexer implements BM25Indexer {
 
 const qdrantService = new QdrantService(qdrant);
 const vectorSearchService = new VectorSearchService({
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
-  qdrantUrl: QDRANT_URL,
+  openaiApiKey: config.openaiApiKey,
+  openaiBaseUrl: config.openaiBaseUrl,
+  openaiEmbeddingModel: config.openaiEmbeddingModel,
+  qdrantUrl: config.qdrantUrl,
   redisClient: redis,
   qdrantService,
 });
@@ -138,7 +159,9 @@ const hybridSearchService = new HybridSearchService(
   redis,
 );
 const ragService = new RAGService({
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openaiApiKey: config.openaiApiKey,
+  openaiBaseUrl: config.openaiBaseUrl,
+  openaiLlmModel: config.openaiLlmModel,
   maxContextTokens: 12_000,
 });
 
@@ -283,8 +306,12 @@ askRouteRouter.post("/", async (c) => {
 
           cleanup(controller);
         } catch (err) {
-          const errorMessage =
+          let errorMessage =
             err instanceof Error ? err.message : "An unexpected error occurred";
+          
+          if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
+            errorMessage = "You have exceeded the Google Gemini API rate limit. Please wait a minute and try again.";
+          }
 
           try {
             enqueue(formatSSE("error", { error: errorMessage, traceId }));
@@ -333,6 +360,7 @@ askRouteRouter.post("/", async (c) => {
       },
     });
   } catch (err) {
+    console.error("ASK ERROR:", err);
     if (isQdrantConnectionError(err)) {
       const errorMessage = "Search service unavailable";
       trace?.end({ error: errorMessage, latencyMs: Math.round(performance.now() - startMs) });

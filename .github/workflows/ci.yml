@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: bun-${{ hashFiles('bun.lockb') }}
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Typecheck
+        run: |
+          for package in packages/*; do
+            if [ -f "$package/tsconfig.json" ]; then
+              echo "Typechecking $package..."
+              bunx tsc --noEmit -p "$package/tsconfig.json" || exit 1
+            fi
+          done
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: bun-${{ hashFiles('bun.lockb') }}
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run ESLint
+        # Assumes `lint` script is configured in root package.json
+        run: bunx eslint .
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: bun-${{ hashFiles('bun.lockb') }}
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Tests
+        run: bun test --coverage
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build API Docker Image
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t codesearch-api:ci -f packages/api/Dockerfile .

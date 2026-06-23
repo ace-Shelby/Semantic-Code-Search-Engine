@@ -16,8 +16,8 @@ export class QdrantService {
     assertRepoId(repoId);
 
     try {
-      const response = await this.client.collectionExists(toCollectionName(repoId));
-      return typeof response === "boolean" ? response : response.exists;
+      await this.client.getCollection(toCollectionName(repoId));
+      return true;
     } catch (err) {
       if (isQdrantConnectionError(err)) {
         throw err;
