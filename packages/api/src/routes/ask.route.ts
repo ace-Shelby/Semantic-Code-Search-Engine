@@ -42,6 +42,7 @@ import {
 import { RAGService } from "../rag/rag.service.ts";
 import { observability } from "../clients.ts";
 import { config } from "../config.ts";
+import bm25Module from "wink-bm25-text-search";
 
 // ── Validation ────────────────────────────────────────────────
 
@@ -86,15 +87,7 @@ class RedisBM25Indexer implements BM25Indexer {
       return [];
     }
 
-    const bm25ModuleName = "wink-bm25-text-search";
-    const bm25Module = await import(bm25ModuleName) as {
-      default: () => {
-        importJSON(serialized: string): void;
-        search(query: string, limit: number): Array<[string, number]>;
-      };
-    };
-
-    const engine = bm25Module.default();
+    const engine = bm25Module() as any;
     engine.defineConfig({ fldWeights: { content: 1.0, filePath: 0.5, symbolName: 4.0 } });
     engine.definePrepTasks([
       function tokenizeCodeText(input: string): string[] {

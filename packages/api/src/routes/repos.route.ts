@@ -7,6 +7,7 @@ import {
   isQdrantConnectionError,
   QdrantService,
 } from "../services/qdrant.service.ts";
+import { runGitHubIngestion } from "@codesearch/ingestion";
 
 const ingestRequestSchema = z.object({
   githubUrl: z.string().min(1).superRefine((value, ctx) => {
@@ -318,18 +319,6 @@ function toRepoSummary(job: Partial<IngestionJob>): RepoSummary[] {
 function runIngestionInBackground(job: IngestionJob): void {
   void (async () => {
     try {
-      const ingestionPackageName = "@codesearch/ingestion";
-      const { runGitHubIngestion } = await import(ingestionPackageName) as {
-        runGitHubIngestion(
-          githubUrl: string,
-          repoId: string,
-          options: {
-            jobId: string;
-            redisClient: typeof redis;
-            onProgress: (job: IngestionJob) => Promise<void>;
-          },
-        ): Promise<IngestionJob>;
-      };
       const result = await runGitHubIngestion(job.repoUrl, job.repoId, {
         jobId: job.id,
         redisClient: redis,
