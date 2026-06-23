@@ -55,3 +55,6 @@ body {
 *:focus-visible {
   @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-surface;
 }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

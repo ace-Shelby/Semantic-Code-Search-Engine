@@ -143,17 +143,17 @@ function SearchPageInner() {
       <div className="w-full max-w-[840px] flex flex-col mt-8 shadow-2xl rounded-2xl bg-[#0A0A0A]/90 backdrop-blur-2xl overflow-hidden border border-white/10">
         
         {/* ── Header ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <GitBranch className="h-4 w-4 text-brand-500" />
-            <span className="text-[14px] font-medium text-white">{repoName}</span>
-            <span className="text-[12px] text-gray-500 font-mono hidden sm:inline-block bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-4 gap-4 sm:gap-0 border-b border-white/5 bg-white/[0.02]">
+          <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+            <GitBranch className="h-4 w-4 text-brand-500 shrink-0" />
+            <span className="text-[14px] font-medium text-white truncate">{repoName}</span>
+            <span className="text-[12px] text-gray-500 font-mono hidden sm:inline-block bg-white/5 px-2 py-0.5 rounded-md border border-white/5 shrink-0">
               {repoId}
             </span>
           </div>
 
           {/* ── Mode Toggle ──────────────────────────────────── */}
-          <div className="flex items-center gap-1 bg-black/50 border border-white/10 p-1 rounded-lg shadow-inner">
+          <div className="flex items-center gap-1 bg-black/50 border border-white/10 p-1 rounded-lg shadow-inner w-full sm:w-auto overflow-x-auto hide-scrollbar">
             {(["hybrid", "vector", "keyword"] as const).map((m) => (
               <button
                 key={m}
@@ -228,7 +228,7 @@ function SearchPageInner() {
             <div className="flex flex-col">
               
               {/* Results Toolbar */}
-              <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl">
+              <div className="sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 gap-3 sm:gap-0 border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl">
                 <p className="text-[12px] text-gray-500 font-medium">
                   {results.length} result{results.length !== 1 && "s"}
                   {latencyMs !== null && (
@@ -239,7 +239,7 @@ function SearchPageInner() {
                 </p>
                 <button
                   onClick={() => setShowAI(!showAI)}
-                  className={`group flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all border ${
+                  className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all border w-full sm:w-auto ${
                     showAI 
                       ? "bg-brand-500/10 text-brand-400 border-brand-500/20" 
                       : "bg-white/5 text-white border-white/10 hover:bg-white/10"

@@ -169,14 +169,14 @@ export default function HomePage() {
             <span className="text-[12px] font-medium text-gray-300 tracking-wide uppercase">Semantic Code Search Engine</span>
           </div>
           
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-[-0.04em] text-white mb-6 leading-[1.1]">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-semibold tracking-[-0.04em] text-white mb-4 sm:mb-6 leading-[1.1] sm:leading-[1.1]">
             Search your codebase.<br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-100 via-brand-400 to-brand-600">
               Instantly.
             </span>
           </h1>
           
-          <p className="text-[#888] text-lg sm:text-xl max-w-[600px] font-light leading-relaxed mb-10">
+          <p className="text-[#888] text-base sm:text-lg md:text-xl max-w-[600px] font-light leading-relaxed mb-8 sm:mb-10 px-2 sm:px-0">
             Index massive repositories in seconds. Use natural language to explore code, understand context, and find exactly what you need with pinpoint accuracy.
           </p>
 
