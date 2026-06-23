@@ -2,7 +2,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 import Redis from "ioredis";
 import { ObservabilityService } from "@codesearch/shared";
 
-export const PORT = Number(process.env.API_PORT ?? 3001);
+export const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
 export const HOST = process.env.API_HOST ?? "0.0.0.0";
 export const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 export const QDRANT_URL = process.env.QDRANT_URL ?? "http://localhost:6333";
