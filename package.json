@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "description": "Semantic code search engine — search any GitHub repo in plain English",
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.0.0"
+  },
   "workspaces": [
     "packages/shared",
     "packages/api",
