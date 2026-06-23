@@ -10,6 +10,7 @@ export const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
 
 export const qdrant = new QdrantClient({
   url: QDRANT_URL,
+  apiKey: process.env.QDRANT_API_KEY,
   checkCompatibility: false,
 });
 

@@ -17,7 +17,10 @@ const QDRANT_URL = process.env.QDRANT_URL ?? "http://localhost:6333";
 const COLLECTION = process.env.QDRANT_COLLECTION ?? "code_chunks";
 const VECTOR_SIZE = Number(process.env.QDRANT_VECTOR_SIZE ?? 1536);
 
-const client = new QdrantClient({ url: QDRANT_URL });
+const client = new QdrantClient({ 
+  url: QDRANT_URL,
+  apiKey: process.env.QDRANT_API_KEY
+});
 
 let collectionEnsured = false;
 

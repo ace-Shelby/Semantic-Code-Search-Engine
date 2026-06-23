@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAskStream } from "@frontend/hooks/useAskStream";
-import { Loader2, AlertTriangle, BookOpen, ChevronRight, Sparkles } from "lucide-react";
+import { AlertTriangle, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -79,17 +79,17 @@ export function StreamingAnswer({ repoId, query }: { repoId: string; query: stri
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({node, ...props}) => <h1 className="text-xl font-bold text-white mb-4 mt-6" {...props} />,
-                  h2: ({node, ...props}) => <h2 className="text-lg font-semibold text-white mb-3 mt-5" {...props} />,
-                  h3: ({node, ...props}) => <h3 className="text-base font-medium text-white mb-3 mt-4" {...props} />,
-                  p: ({node, ...props}) => <p className="mb-4" {...props} />,
-                  ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
-                  ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-1" {...props} />,
-                  li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                  a: ({node, ...props}) => <a className="text-brand-400 hover:underline" {...props} />,
-                  strong: ({node, ...props}) => <strong className="font-semibold text-white" {...props} />,
-                  pre: ({node, ...props}) => <pre className="bg-[#0A0A0A] border border-white/10 p-4 rounded-xl overflow-x-auto text-[13px] text-gray-300 mb-4 font-mono shadow-inner" {...props} />,
-                  code: ({node, className, ...props}) => {
+                  h1: ({_node, ...props}) => <h1 className="text-xl font-bold text-white mb-4 mt-6" {...props} />,
+                  h2: ({_node, ...props}) => <h2 className="text-lg font-semibold text-white mb-3 mt-5" {...props} />,
+                  h3: ({_node, ...props}) => <h3 className="text-base font-medium text-white mb-3 mt-4" {...props} />,
+                  p: ({_node, ...props}) => <p className="mb-4" {...props} />,
+                  ul: ({_node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
+                  ol: ({_node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-1" {...props} />,
+                  li: ({_node, ...props}) => <li className="pl-1" {...props} />,
+                  a: ({_node, ...props}) => <a className="text-brand-400 hover:underline" {...props} />,
+                  strong: ({_node, ...props}) => <strong className="font-semibold text-white" {...props} />,
+                  pre: ({_node, ...props}) => <pre className="bg-[#0A0A0A] border border-white/10 p-4 rounded-xl overflow-x-auto text-[13px] text-gray-300 mb-4 font-mono shadow-inner" {...props} />,
+                  code: ({_node, className, ...props}) => {
                     const match = /language-(\w+)/.exec(className || '');
                     return match ? (
                       <code className={className} {...props} />

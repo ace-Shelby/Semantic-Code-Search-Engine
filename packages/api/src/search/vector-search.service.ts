@@ -187,7 +187,11 @@ class QdrantService implements QdrantSimilaritySearch {
   private readonly collectionName: string;
 
   constructor(qdrantUrl: string, collectionName = process.env.QDRANT_COLLECTION ?? DEFAULT_COLLECTION) {
-    this.client = new QdrantClient({ url: qdrantUrl, checkCompatibility: false });
+    this.client = new QdrantClient({ 
+      url: qdrantUrl, 
+      apiKey: process.env.QDRANT_API_KEY,
+      checkCompatibility: false 
+    });
     this.collectionName = collectionName;
   }
 

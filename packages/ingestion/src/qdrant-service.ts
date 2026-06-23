@@ -106,7 +106,11 @@ export class QdrantService {
 
   constructor(qdrantUrl: string = "http://localhost:6333") {
     this.url = qdrantUrl;
-    this.client = new QdrantClient({ url: qdrantUrl, checkCompatibility: false });
+    this.client = new QdrantClient({ 
+      url: qdrantUrl, 
+      apiKey: process.env.QDRANT_API_KEY,
+      checkCompatibility: false 
+    });
   }
 
   // ── Collection Lifecycle ──────────────────────────────────

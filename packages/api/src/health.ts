@@ -14,7 +14,11 @@ healthRouter.get("/", async (c) => {
 
   // Check Qdrant
   try {
-    const qdrantRes = await fetch(`${QDRANT_URL}/healthz`);
+    const headers: Record<string, string> = {};
+    if (process.env.QDRANT_API_KEY) {
+      headers["api-key"] = process.env.QDRANT_API_KEY;
+    }
+    const qdrantRes = await fetch(`${QDRANT_URL}/healthz`, { headers });
     if (qdrantRes.ok) {
       qdrantOk = true;
     }

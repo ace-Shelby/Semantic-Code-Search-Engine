@@ -4,18 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
-  Command,
   Loader2,
-  Check,
-  X,
   AlertTriangle,
   ArrowRight,
-  Database,
-  TerminalSquare,
-  CornerDownLeft,
-  Terminal,
-  ChevronRight,
-  Zap
+  Terminal
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────
