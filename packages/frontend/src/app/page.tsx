@@ -7,7 +7,8 @@ import {
   Loader2,
   AlertTriangle,
   ArrowRight,
-  Terminal
+  Terminal,
+  Info
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -214,6 +215,14 @@ export default function HomePage() {
                 {isIngesting ? "Indexing..." : "Index Codebase"}
               </button>
             </form>
+          </div>
+
+          {/* ── Free Resources Notice ─────────────────────────── */}
+          <div className="mt-6 flex items-start gap-2 text-left text-[13px] text-gray-400 max-w-[680px] w-full px-2">
+            <Info className="h-4 w-4 shrink-0 text-brand-400 mt-0.5" />
+            <p>
+              Please try indexing smaller repositories. We are currently running entirely on free-tier infrastructure, so large codebases might time out!
+            </p>
           </div>
 
           {/* ── Error Banner ────────────────────────────────────── */}
