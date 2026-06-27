@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2, AlertTriangle, ArrowRight, Terminal, Info } from "lucide-react";
+import { Loader2, AlertTriangle, ArrowRight, Terminal, Info } from "lucide-react";
 
 interface IngestResponse {
   jobId: string;

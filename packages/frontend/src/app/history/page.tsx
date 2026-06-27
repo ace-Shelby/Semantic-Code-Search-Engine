@@ -82,7 +82,7 @@ export default function HistoryPage() {
               <Terminal className="h-6 w-6 text-gray-500" />
             </div>
             <p className="text-gray-400 text-sm max-w-xs mb-4 leading-relaxed">
-              You haven't indexed any repositories yet.
+              You haven&apos;t indexed any repositories yet.
             </p>
             <button
               onClick={() => router.push("/")}
