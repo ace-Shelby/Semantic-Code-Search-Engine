@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Code2 } from "lucide-react";
+import { Code2, Github } from "lucide-react";
 import Link from "next/link";
 import "./globals.css";
 
@@ -43,19 +43,49 @@ export default function RootLayout({
                 CodeSearch<span className="text-accent">AI</span>
               </span>
             </Link>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-6 text-sm">
               <Link
                 href="/"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Home
               </Link>
+              <Link
+                href="/history"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                History
+              </Link>
+              <a
+                href="https://github.com/ace-Shelby/Semantic-Code-Search-Engine"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-white/10 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10"
+              >
+                <Github className="h-4 w-4" />
+                <span className="hidden sm:inline-block font-medium">GitHub</span>
+              </a>
             </div>
           </div>
         </nav>
 
         {/* ── Page Content ────────────────────────────────────── */}
-        <main className="mx-auto max-w-6xl px-4">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 flex-1 w-full min-h-[calc(100vh-140px)]">
+          {children}
+        </main>
+
+        {/* ── Footer ──────────────────────────────────────────── */}
+        <footer className="border-t border-white/10 bg-[#0A0A0A]/50 mt-12 py-8">
+          <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+            <div className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" />
+              <span>Semantic Code Search Engine</span>
+            </div>
+            <p>
+              Built with Next.js, Bun, and Qdrant.
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   );

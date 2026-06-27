@@ -2,24 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Search,
-  Loader2,
-  AlertTriangle,
-  ArrowRight,
-  Terminal,
-  Info
-} from "lucide-react";
-
-// ── Types ─────────────────────────────────────────────────────
-
-interface RepoSummary {
-  repoId: string;
-  repoUrl: string;
-  status: "pending" | "running" | "complete" | "failed";
-  totalChunks: number;
-  createdAt: string;
-}
+import { Search, Loader2, AlertTriangle, ArrowRight, Terminal, Info } from "lucide-react";
 
 interface IngestResponse {
   jobId: string;
@@ -45,28 +28,10 @@ const BACKEND_URL = "/api/proxy";
 export default function HomePage() {
   const router = useRouter();
   
-  const [repos, setRepos] = useState<RepoSummary[]>([]);
   const [githubUrl, setGithubUrl] = useState("");
   const [isIngesting, setIsIngesting] = useState(false);
   const [activeJob, setActiveJob] = useState<IngestionJob | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // ── Fetch repos on mount ────────────────────────────────────
-  const fetchRepos = useCallback(async () => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/repos`);
-      if (res.ok) {
-        const data = await res.json();
-        setRepos(data.repos ?? []);
-      }
-    } catch {
-      // Silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRepos();
-  }, [fetchRepos]);
 
   // ── Poll ingestion status ───────────────────────────────────
   useEffect(() => {
@@ -83,7 +48,6 @@ export default function HomePage() {
 
         if (job.status === "complete") {
           setIsIngesting(false);
-          fetchRepos();
           setTimeout(() => {
             router.push(`/search?repoId=${job.repoId}`);
           }, 500);
@@ -99,7 +63,7 @@ export default function HomePage() {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [activeJob, fetchRepos, router]);
+  }, [activeJob, router]);
 
   // ── Submit handler ──────────────────────────────────────────
   const handleIngest = async (e: React.FormEvent) => {
@@ -267,63 +231,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ── Indexed Repositories ───────────────────────────── */}
-        {repos.length > 0 && (
-          <div className="w-full mt-12 mb-20">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-              <h2 className="text-lg font-medium text-white tracking-tight">
-                Indexed Repositories
-              </h2>
-              <span className="text-[12px] font-medium text-gray-500 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                {repos.length} Total
-              </span>
-            </div>
-            
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {repos.map((repo) => (
-                <div
-                  key={repo.repoId}
-                  className="group relative flex flex-col rounded-xl border border-white/10 bg-[#0A0A0A]/50 backdrop-blur-md p-5 hover:bg-[#111] hover:border-white/20 transition-all duration-300 cursor-default shadow-lg"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[15px] font-medium text-white truncate group-hover:text-brand-50 transition-colors">
-                        {repoName(repo.repoUrl)}
-                      </h3>
-                      <p className="text-[12px] text-gray-500 mt-1 font-mono truncate">
-                        {repo.repoId}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                    <span className="text-[12px] font-medium text-gray-500">
-                      {repo.totalChunks.toLocaleString()} chunks
-                    </span>
-                    {repo.status === "complete" ? (
-                      <button
-                        onClick={() => router.push(`/search?repoId=${repo.repoId}`)}
-                        className="flex items-center gap-1.5 rounded-md bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-white/10 transition-colors border border-white/5"
-                      >
-                        <Search className="h-3 w-3 text-gray-400" />
-                        Explore
-                      </button>
-                    ) : repo.status === "failed" ? (
-                       <span className="flex items-center gap-1.5 text-[12px] text-red-400">
-                        <AlertTriangle className="h-3 w-3" /> Failed
-                       </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 text-[12px] text-brand-400">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Indexing
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
       </div>
     </div>
   );
